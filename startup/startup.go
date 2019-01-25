@@ -29,9 +29,30 @@ func StartUp(server api.Api) InitInfo{
 		info.Username = username
 		info.Password = password
 	} else if choice == 2 {
-		// = signIn()
+		username, password := signIn()
+		info.Username = username
+		info.Password = password
 	}
 	return info
+}
+
+func signIn() (string, string) {
+	for {
+		fmt.Print("Username: ")
+		username := ReadLine()
+		fmt.Print("Password (this is an unsecure system): ")
+		password := ReadLine()
+
+		resp, err := Server.SignIn(username, password)
+		if err == nil && len(resp.Error) == 0 {
+				fmt.Println("Signed in!")
+				return username, password
+		} else if len(resp.Error) > 0 {
+			fmt.Println(resp.Error)
+		} else {
+			fmt.Println(err)
+		}
+	}
 }
 
 func newUser() (string, string) {

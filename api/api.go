@@ -10,6 +10,7 @@ import (
 type (
 	Api interface {
 		NewUser(username, password string) (NewUserResponse, error)
+		SignIn(username, password string) (BaseResponse, error)
 	}
 
 	Server struct {
@@ -37,6 +38,19 @@ func (server Server) NewUser(username, password string) (NewUserResponse, error)
 	} else {
 		return newUserResponse, nil
 	}
+}
+
+func (server Server) SignIn(username, password string) (BaseResponse, error) {
+	req := struct {
+		username string
+		password string
+	}{
+		username,
+		password,
+	}
+	var resp BaseResponse
+	err := call(server.domain + "/signin", req, &resp)
+	return resp, err
 }
 
 func call(path string, body interface{}, response interface{}) error {
