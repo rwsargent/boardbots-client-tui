@@ -4,11 +4,12 @@ import (
 	"net/http"
 	"encoding/json"
 	"bytes"
+	"fmt"
 )
 
 type (
 	Api interface {
-		NewUser(username, password string) BaseResponse
+		NewUser(username, password string) (NewUserResponse, error)
 	}
 
 	Server struct {
@@ -16,7 +17,13 @@ type (
 	}
 )
 
-func (server Server) NewUser(username, password string) (BaseResponse, error) {
+func NewServer(domain string) Server {
+	return Server {
+		domain: domain,
+	}
+}
+
+func (server Server) NewUser(username, password string) (NewUserResponse, error) {
 	req := struct {
 		username string
 		password string
@@ -24,11 +31,11 @@ func (server Server) NewUser(username, password string) (BaseResponse, error) {
 		username,
 		password,
 	}
-	var baseResponse BaseResponse
-	if err := call(server.domain + "/newuser", req, &baseResponse); err != nil {
-		return baseResponse, nil
+	var newUserResponse NewUserResponse
+	if err := call(server.domain + "/newuser", req, &newUserResponse); err != nil {
+		return NewUserResponse{}, err
 	} else {
-		return BaseResponse{}, err
+		return newUserResponse, nil
 	}
 }
 
@@ -40,6 +47,9 @@ func call(path string, body interface{}, response interface{}) error {
 		return err
 	}
 	decoder := json.NewDecoder(rawResponse.Body)
-	decoder.Decode(response)
+	err = decoder.Decode(response)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 	return nil
 }

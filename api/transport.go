@@ -6,13 +6,19 @@ import (
 	"boardbots/util"
 )
 
-type (BaseResponse struct {
-	Error string `json:"error"`
-}
+type (
+	BaseResponse struct {
+		Error string `json:"error"`
+	}
 
 	BoardResponse struct {
 		Board []TPiece `json:"board"`
 		CurrentTurn quoridor.PlayerPosition `json:"currentTurn"`
+	}
+
+	NewUserResponse struct {
+		BaseResponse
+		UserId uuid.UUID `json:"userId"`
 	}
 
 	GameResponse struct {
