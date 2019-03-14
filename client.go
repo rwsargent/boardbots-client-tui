@@ -3,13 +3,12 @@ package main
 import (
 	"boardbotclient/view"
 	"github.com/nsf/termbox-go"
-	"boardbotclient/api"
 	"boardbotclient/startup"
 )
 
 func main() {
-	server := api.NewServer("http://localhost:8080")
-	startup.StartUp(server)
+	startup.StartUp("http://localhost:8080")
+
 //	err := termbox.Init()
 //	if err != nil {
 //		panic(err)

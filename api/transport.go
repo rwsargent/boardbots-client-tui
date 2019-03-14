@@ -4,6 +4,7 @@ import (
 	"boardbots/quoridor"
 	"github.com/google/uuid"
 	"boardbots/util"
+	"time"
 )
 
 type (
@@ -25,10 +26,16 @@ type (
 		BaseResponse
 		BoardResponse
 		Players []TPlayer
+		GameId uuid.UUID `json:gameId"`
 	}
 
 	GameRequest struct {
 		GameId uuid.UUID `json:"gameId"`
+	}
+
+	GameListResponse struct {
+		BaseResponse
+		Games []TGame `json:"games"`
 	}
 
 	TPiece struct {
@@ -41,5 +48,12 @@ type (
 		Barriers int `json:"barriers"`
 		PlayerName string `json:"playerName"`
 		PawnPosition util.Position `json:"pawnPosition"`
+	}
+
+	TGame struct {
+		Players []string `json:"players"`
+		StartTime time.Time `json:"starTime"`
+		CurrentTurn int `json:"currentTurn"`
+		GameId uuid.UUID `json:"gameId"`
 	}
 )

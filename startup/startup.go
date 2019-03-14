@@ -11,7 +11,7 @@ import (
 )
 
 var reader = bufio.NewReader(os.Stdin)
-var Server api.Api
+var Server api.Server
 
 type InitInfo struct {
 	Username string
@@ -19,63 +19,93 @@ type InitInfo struct {
 	GameId uuid.UUID
 }
 
-func StartUp(server api.Api) InitInfo{
-	info := InitInfo{}
-	Server = server
+func StartUp(domain string) api.Server {
+	server := authenticate(domain)
+	chooseGame(server)
+	return server
+}
+
+func chooseGame(server api.Server) api.TGame {
+	var game *api.TGame = nil
+	for game == nil{
+		gameChoice := GetNumberedSelection([]string{"Start new game", "Join game", "Resume game"})
+		//var game api.TGame
+		switch gameChoice {
+		case 1:
+			gameResp, err := server.MakeGame()
+			if err != nil {
+				fmt.Println(err)
+				break
+			}
+			if len(gameResp.Error) > 0 {
+				fmt.Println(gameResp.Error)
+				break
+			}
+			fmt.Println("Created game: ", gameResp.GameId)
+			game = &api.TGame{}
+		case 2:
+			//
+		case 3:
+			// resume game
+		}
+	}
+	return api.TGame{}
+}
+
+func authenticate(domain string) api.Server {
+	credentials, action := getCredentials()
+	server := api.NewServer(domain, credentials)
+	var resp api.BaseResponse
+	var err error
+	switch action {
+	case 1:
+		resp, err = server.NewUser()
+	case 2:
+		resp, err = server.SignIn()
+	}
+	if err != nil {
+		fmt.Println("We encountered an error", err)
+		panic(err.Error())
+	}
+	if len(resp.Error) != 0 {
+		panic(resp.Error)
+	}
+	fmt.Println("Success!")
+	return server
+}
+
+//func getGame(server api.Server) uuid.UUID {
+//	gameResponse, err := server.GetGames()
+//	if err != nil {
+//		panic(err)
+//	} else if len(gameResponse.Error) != 0 {
+//		panic(gameResponse.Error)
+//	}
+//
+//	displayGames := convertToDisplay(gameResponse.Games)
+//	return uuid.Nil
+//}
+//
+//func convertToDisplay(games []api.TGame) []string {
+//	displayGames := make([]string, 0, len(games))
+//	for _, game := range games {
+//		game
+//	}
+//	fmt.Sprintf("")
+//}
+
+func getCredentials() (api.Credentials, int) {
+	credentials := api.Credentials{}
 	fmt.Println("Welcome to BoardBots - Quorridor!")
-	choice := getNumberedSelection([]string{"New User", "Sign In"})
-	if choice == 1 {
-		username, password := newUser()
-		info.Username = username
-		info.Password = password
-	} else if choice == 2 {
-		username, password := signIn()
-		info.Username = username
-		info.Password = password
-	}
-	return info
+	choice := GetNumberedSelection([]string{"New User", "Sign In"})
+	fmt.Print("Username: ")
+	credentials.Username = ReadLine()
+	fmt.Print("Password (this is an unsecure system): ")
+	credentials.Password = ReadLine()
+	return credentials, choice
 }
 
-func signIn() (string, string) {
-	for {
-		fmt.Print("Username: ")
-		username := ReadLine()
-		fmt.Print("Password (this is an unsecure system): ")
-		password := ReadLine()
-
-		resp, err := Server.SignIn(username, password)
-		if err == nil && len(resp.Error) == 0 {
-				fmt.Println("Signed in!")
-				return username, password
-		} else if len(resp.Error) > 0 {
-			fmt.Println(resp.Error)
-		} else {
-			fmt.Println(err)
-		}
-	}
-}
-
-func newUser() (string, string) {
-	for {
-		fmt.Print("Username: ")
-		username := ReadLine()
-		fmt.Print("Password (this is an unsecure system): ")
-		password := ReadLine()
-
-		resp, err := Server.NewUser(username, password)
-		if err != nil {
-			panic(err)
-		}
-		if len(resp.Error) > 0 {
-			fmt.Printf("Sorry, there was an issue: %s.\n", resp.Error)
-			continue
-		}
-		fmt.Println("Success")
-		return username, password
-	}
-}
-
-func getNumberedSelection(options []string) int {
+func GetNumberedSelection(options []string) int {
 	for {
 		for idx, option := range options {
 			fmt.Printf("%d) %s\n", idx+1, option)

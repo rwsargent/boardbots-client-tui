@@ -9,54 +9,77 @@ import (
 
 type (
 	Api interface {
-		NewUser(username, password string) (NewUserResponse, error)
-		SignIn(username, password string) (BaseResponse, error)
+		NewUser() (BaseResponse, error)
+		SignIn() (BaseResponse, error)
+		GetGames() (GameListResponse, error)
+		MakeGame() (GameResponse, error)
+		JoinGame() (GameResponse, error)
 	}
 
 	Server struct {
-		domain string
+		domain      string
+		credentials Credentials
+	}
+
+	Credentials struct {
+		Username string `json:"Username"`
+		Password string `json:"Password"`
 	}
 )
 
-func NewServer(domain string) Server {
+const ApiPrefix = "/api/v1/"
+
+func NewServer(domain string, credentials Credentials) Server {
 	return Server {
 		domain: domain,
+		credentials: credentials,
 	}
 }
 
-func (server Server) NewUser(username, password string) (NewUserResponse, error) {
-	req := struct {
-		username string
-		password string
-	}{
-		username,
-		password,
-	}
-	var newUserResponse NewUserResponse
-	if err := call(server.domain + "/newuser", req, &newUserResponse); err != nil {
-		return NewUserResponse{}, err
-	} else {
-		return newUserResponse, nil
-	}
-}
-
-func (server Server) SignIn(username, password string) (BaseResponse, error) {
-	req := struct {
-		username string
-		password string
-	}{
-		username,
-		password,
+func (server Server) NewUser() (BaseResponse, error) {
+	req := Credentials{
+		Username: server.credentials.Username,
+		Password: server.credentials.Password,
 	}
 	var resp BaseResponse
-	err := call(server.domain + "/signin", req, &resp)
+	if err := server.call("/newuser", req, &resp); err != nil {
+		return BaseResponse{}, err
+	} else {
+		return resp, nil
+	}
+}
+
+func (server Server) SignIn() (BaseResponse, error) {
+	var resp BaseResponse
+	err := server.call("/signin", server.credentials, &resp)
 	return resp, err
 }
 
-func call(path string, body interface{}, response interface{}) error {
+func (server Server) GetGames() (GameListResponse, error) {
+	var response GameListResponse
+	err := server.call(ApiPrefix + "getgames", "",  &response)
+	return response, err
+}
+
+func (server Server) MakeGame() (GameResponse, error) {
+	var response GameResponse
+	err := server.call(ApiPrefix + "makegame", "", &response)
+	return response, err
+}
+
+func (server Server) call(path string, body interface{}, response interface{}) error {
 	buffer := new(bytes.Buffer)
 	json.NewEncoder(buffer).Encode(body)
-	rawResponse, err := http.Post(path, "application/json", buffer)
+	client := http.Client{}
+	request, err := http.NewRequest("POST", server.domain + path, buffer)
+	if err != nil {
+		return err
+	}
+	if len(server.credentials.Username) > 0 {
+		request.SetBasicAuth(server.credentials.Username, server.credentials.Password)
+	}
+	rawResponse, err := client.Do(request)
+
 	if err != nil {
 		return err
 	}
