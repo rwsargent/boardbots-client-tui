@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"bytes"
 	"fmt"
+	"log"
 )
 
 type (
@@ -27,7 +28,7 @@ type (
 	}
 )
 
-const ApiPrefix = "/api/v1/"
+const ApiPrefix = "/api/v0/"
 
 func NewServer(domain string, credentials Credentials) Server {
 	return Server {
@@ -72,6 +73,7 @@ func (server Server) call(path string, body interface{}, response interface{}) e
 	json.NewEncoder(buffer).Encode(body)
 	client := http.Client{}
 	request, err := http.NewRequest("POST", server.domain + path, buffer)
+	request.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return err
 	}
@@ -79,14 +81,16 @@ func (server Server) call(path string, body interface{}, response interface{}) e
 		request.SetBasicAuth(server.credentials.Username, server.credentials.Password)
 	}
 	rawResponse, err := client.Do(request)
-
 	if err != nil {
 		return err
 	}
+	log.Printf("Raw response: %v\n", rawResponse)
+	log.Println("Raw Body: ", rawResponse.Body)
 	decoder := json.NewDecoder(rawResponse.Body)
 	err = decoder.Decode(response)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+	log.Println("Decoded: ", response)
 	return nil
 }
