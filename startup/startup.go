@@ -44,7 +44,8 @@ func chooseGame(server api.Server) api.TGame {
 			fmt.Println("Created game: ", gameResp.GameId)
 			game = &api.TGame{}
 		case 2:
-			//
+			// join game
+			server.GetGames()
 		case 3:
 			// resume game
 		}

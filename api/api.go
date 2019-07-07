@@ -56,7 +56,7 @@ func (server Server) SignIn() (BaseResponse, error) {
 	return resp, err
 }
 
-func (server Server) GetGames() (GameListResponse, error) {
+func (server Server) GetGames(request GetGamesRequest) (GameListResponse, error) {
 	var response GameListResponse
 	err := server.call(ApiPrefix + "getgames", "",  &response)
 	return response, err

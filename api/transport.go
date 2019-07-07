@@ -29,6 +29,10 @@ type (
 		GameId uuid.UUID `json:gameId"`
 	}
 
+	GetGamesRequest struct {
+		Status string
+	}
+
 	GameRequest struct {
 		GameId uuid.UUID `json:"gameId"`
 	}
